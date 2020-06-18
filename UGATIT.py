@@ -868,3 +868,42 @@ class UGATIT(object):
             index.write("</tr>")
 
         index.close()
+
+    def export_saved_model(self, export_dir="./saved_models"):
+        tf.global_variables_initializer().run()
+
+        self.saver = tf.train.Saver()
+        could_load, checkpoint_counter = self.load(self.checkpoint_dir)
+
+        if could_load:
+            print(" [*] Load SUCCESS")
+        else:
+            print(" [!] Load failed...")
+
+        builder = tf.compat.v1.saved_model.builder.SavedModelBuilder(
+            os.path.join(export_dir, self.model_dir))
+
+        x = self.test_domain_A
+        y = self.test_fake_B
+        tensor_info_x = tf.compat.v1.saved_model.utils.build_tensor_info(x)
+        tensor_info_y = tf.compat.v1.saved_model.utils.build_tensor_info(y)
+
+        prediction_signature = (
+            tf.compat.v1.saved_model.signature_def_utils.build_signature_def(
+                inputs={'selfie': tensor_info_x},
+                outputs={'anime': tensor_info_y},
+                method_name=tf.compat.v1.saved_model.signature_constants
+                .PREDICT_METHOD_NAME))
+
+        builder.add_meta_graph_and_variables(
+            self.sess, [tf.compat.v1.saved_model.tag_constants.SERVING],
+            signature_def_map={
+                tf.saved_model.signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY:
+                    prediction_signature,
+            },
+            main_op=tf.compat.v1.tables_initializer(),
+            strip_default_attrs=True)
+
+        builder.save()
+
+        print("Done exporting!")

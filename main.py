@@ -12,7 +12,7 @@ def parse_args():
     parser.add_argument('--phase',
                         type=str,
                         default='train',
-                        help='[train / test]')
+                        help='[train / test / export]')
     parser.add_argument('--light',
                         type=str2bool,
                         default=False,
@@ -195,6 +195,10 @@ def main():
         if args.phase == 'test':
             gan.test()
             print(" [*] Test finished!")
+
+        if args.phase == "export":
+            gan.export_saved_model()
+            print(" [*] Export model finished!")
 
 
 if __name__ == '__main__':
